@@ -5,10 +5,10 @@ pipeline {
         stage('zipRepo') {
             steps {
                 powershell '''
-					$sourcePath = "${env:WORKSPACE}\\"
+					$sourcePath = "${env:WORKSPACE}/"
 					write-host "$sourcePath"
 					$destinationPath = Split-Path -Path "$sourcePath"
-					$destinationPath += "\\${env:JOB_NAME}-${env:BUILD_NUMBER}.zip"
+					$destinationPath += "/${env:JOB_NAME}-${env:BUILD_NUMBER}.zip"
 					Write-Host "$destinationPath"
 					
                     if(Test-Path -Path $destinationPath -PathType Leaf)
@@ -21,8 +21,8 @@ pipeline {
                     $files = [IO.Directory]::GetFiles($sourcePath, "*" , [IO.SearchOption]::AllDirectories)
                     foreach($file in $files)
                     {
-                        $relPath = $file.Substring($sourcePath.Length).Replace("\\\\", "/").Replace("\\", "/") #Linux path check
-                        $a = [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file.Replace("\\\\", "/").Replace("\\", "/"), $relPath); # Linux path
+                        $relPath = $file.Substring($sourcePath.Length).Replace("//", "/").Replace("//", "/") #Linux path check
+                        $a = [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file.Replace("//", "/").Replace("//", "/"), $relPath); # Linux path
                     }
                     $zip.Dispose()
 				
@@ -36,7 +36,7 @@ pipeline {
 					
 					$sourcePath = "${env:WORKSPACE}"
 					$filePath = Split-Path -Path "$sourcePath"
-					$filePath += "\\${env:JOB_NAME}-${env:BUILD_NUMBER}.zip"
+					$filePath += "/${env:JOB_NAME}-${env:BUILD_NUMBER}.zip"
 					Write-Host "$destinationPath"
 
 					$buildId = "${env:JOB_NAME}-${env:BUILD_NUMBER}"
