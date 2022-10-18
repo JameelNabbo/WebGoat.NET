@@ -5,6 +5,7 @@ pipeline {
         stage('zipRepo') {
             steps {
                 powershell '''
+					write-host "testing from the repo"
 					$sourcePath = "${env:WORKSPACE}/"
 					write-host "$sourcePath"
 					$destinationPath = Split-Path -Path "$sourcePath"
