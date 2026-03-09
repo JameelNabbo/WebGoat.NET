@@ -1,0 +1,30 @@
+# Vulnerable AI Configuration - Test Sample
+# Contains intentional misconfigurations for scanner testing
+
+model_serving:
+  host: "0.0.0.0"
+  port: 8080
+  debug: true
+  verbose: True
+  workers: 4
+
+inference:
+  model_path: /opt/models/latest
+  batch_size: 32
+  DEBUG: true
+
+metrics_port: "0.0.0.0:9090"
+prometheus_endpoint: "0.0.0.0:9091"
+
+api_keys:
+  openai_api_key: "sk-proj-abc123def456ghi789jkl012mno345pqr678"
+  anthropic_api_key: "sk-ant-api03-abc123def456ghi789jkl012mno345"
+  secret_key: "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnop"
+
+database:
+  host: "db.internal"
+  password: "ModelServing!2024"
+
+monitoring:
+  enabled: true
+  health_port: "0.0.0.0:8081"

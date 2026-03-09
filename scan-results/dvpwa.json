@@ -1,0 +1,99 @@
+{
+  "project": "dvpwa",
+  "language": "python",
+  "scanner_port": 9001,
+  "scan_id": "0c7c573e-4255-48f7-b5f4-06494d782b39",
+  "status": "COMPLETED",
+  "timestamp": "2026-03-08T16:39:43.371326",
+  "files_collected": 16,
+  "files_scanned": 16,
+  "scan_duration_seconds": 0.05,
+  "total_vulnerabilities": 3,
+  "severity_counts": {
+    "critical": 0,
+    "high": 1,
+    "medium": 2,
+    "low": 0,
+    "info": 0
+  },
+  "vulnerability_categories": [
+    "SSRF",
+    "Timing Attacks"
+  ],
+  "cwes_found": [
+    "CWE-208",
+    "CWE-918"
+  ],
+  "vulnerabilities": [
+    {
+      "id": "cf64908f-c358-4d72-9a86-4e387b8f50a7",
+      "title": "Timing Attack: String comparison of 'token' with == operator",
+      "severity": "Medium",
+      "confidence": "Medium",
+      "cwe": "CWE-208",
+      "owasp": "A02:2021",
+      "filePath": "sqli/middlewares.py",
+      "lineNumber": 32,
+      "columnOffset": 24,
+      "endLine": 32,
+      "codeSnippet": "    30:         token = session.pop('_csrf_token', None)\n    31:         formdata = await request.post()\n>>> 32:         if not token or token != formdata.get('_csrf_token'):\n    33:             log.error(\n    34:                 'Request to %s was aborted because CSRF tokens mismatched',",
+      "remediation": "Use hmac.compare_digest() or secrets.compare_digest() for constant-time comparison of secrets and tokens.",
+      "category": "Timing Attacks",
+      "dataFlow": []
+    },
+    {
+      "id": "17cfd237-9ca2-4a05-ac3c-463577620a2d",
+      "title": "SSRF: User-controlled URL in overrides.get()",
+      "severity": "High",
+      "confidence": "High",
+      "cwe": "CWE-918",
+      "owasp": "A10:2021",
+      "filePath": "sqli/middlewares.py",
+      "lineNumber": 46,
+      "columnOffset": 23,
+      "endLine": 46,
+      "codeSnippet": "    44:         try:\n    45:             response = await handler(request)\n>>> 46:             override = overrides.get(response.status)\n    47:             if override is None:\n    48:                 return response",
+      "remediation": "Validate and whitelist allowed URLs/domains. Never let users control the full URL in server-side HTTP requests. Use an allowlist of permitted hosts.",
+      "category": "SSRF",
+      "dataFlow": [
+        {
+          "file": "sqli/middlewares.py",
+          "line": 45,
+          "code": "            response = await handler(request)"
+        },
+        {
+          "file": "sqli/middlewares.py",
+          "line": 46,
+          "code": "            override = overrides.get(response.status)"
+        },
+        {
+          "file": "sqli/middlewares.py",
+          "line": 62,
+          "code": "    response = render_template('errors/40x.jinja2',"
+        },
+        {
+          "file": "sqli/middlewares.py",
+          "line": 69,
+          "code": "    response = render_template('errors/50x.jinja2',"
+        }
+      ]
+    },
+    {
+      "id": "f3f913de-34a3-4c20-a17a-95b6719cd6a4",
+      "title": "Timing Attack: String comparison of 'self.pwd_hash' with == operator",
+      "severity": "Medium",
+      "confidence": "Medium",
+      "cwe": "CWE-208",
+      "owasp": "A02:2021",
+      "filePath": "sqli/dao/user.py",
+      "lineNumber": 41,
+      "columnOffset": 15,
+      "endLine": 41,
+      "codeSnippet": "    39: \n    40:     def check_password(self, password: str):\n>>> 41:         return self.pwd_hash == md5(password.encode('utf-8')).hexdigest()",
+      "remediation": "Use hmac.compare_digest() or secrets.compare_digest() for constant-time comparison of secrets and tokens.",
+      "category": "Timing Attacks",
+      "dataFlow": []
+    }
+  ],
+  "errors": []
+}

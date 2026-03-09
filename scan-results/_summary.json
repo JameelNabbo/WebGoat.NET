@@ -1,0 +1,466 @@
+{
+  "scan_date": "2026-03-08T16:39:47.057910",
+  "total_projects_scanned": 11,
+  "total_projects_skipped": 0,
+  "total_files_scanned": 1079,
+  "total_vulnerabilities": 460,
+  "total_critical": 18,
+  "total_high": 200,
+  "total_medium": 185,
+  "total_low": 57,
+  "per_project": [
+    {
+      "project": "Vulnerable-Flask-App",
+      "language": "python",
+      "scanner_port": 9001,
+      "scan_id": "8efce23c-b9f2-4416-a3e2-fee52f29a41b",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:43.317200",
+      "files_collected": 2,
+      "files_scanned": 2,
+      "scan_duration_seconds": 0.05,
+      "total_vulnerabilities": 24,
+      "severity_counts": {
+        "critical": 3,
+        "high": 13,
+        "medium": 7,
+        "low": 1,
+        "info": 0
+      },
+      "vulnerability_categories": [
+        "Deserialization",
+        "Hardcoded Secrets",
+        "Information Disclosure",
+        "Insecure Random",
+        "JWT Issues",
+        "Path Traversal",
+        "SQL Injection",
+        "SSL/TLS Verification Disabled",
+        "SSRF",
+        "Weak Cryptography",
+        "XSS"
+      ],
+      "cwes_found": [
+        "CWE-209",
+        "CWE-22",
+        "CWE-295",
+        "CWE-328",
+        "CWE-330",
+        "CWE-347",
+        "CWE-502",
+        "CWE-79",
+        "CWE-798",
+        "CWE-89",
+        "CWE-918"
+      ],
+      "errors": []
+    },
+    {
+      "project": "dvpwa",
+      "language": "python",
+      "scanner_port": 9001,
+      "scan_id": "0c7c573e-4255-48f7-b5f4-06494d782b39",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:43.371326",
+      "files_collected": 16,
+      "files_scanned": 16,
+      "scan_duration_seconds": 0.05,
+      "total_vulnerabilities": 3,
+      "severity_counts": {
+        "critical": 0,
+        "high": 1,
+        "medium": 2,
+        "low": 0,
+        "info": 0
+      },
+      "vulnerability_categories": [
+        "SSRF",
+        "Timing Attacks"
+      ],
+      "cwes_found": [
+        "CWE-208",
+        "CWE-918"
+      ],
+      "errors": []
+    },
+    {
+      "project": "vulnerable-node",
+      "language": "javascript",
+      "scanner_port": 9002,
+      "scan_id": "77eb28ab-0ec3-4c04-a89e-e0f2390e30f7",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:44.095308",
+      "files_collected": 13,
+      "files_scanned": 11,
+      "scan_duration_seconds": 0.72,
+      "total_vulnerabilities": 14,
+      "severity_counts": {
+        "critical": 0,
+        "high": 4,
+        "medium": 3,
+        "low": 7,
+        "info": 0
+      },
+      "vulnerability_categories": [
+        "CSRF Missing",
+        "Hardcoded Secrets",
+        "Insecure Random",
+        "Open Redirect",
+        "Prototype Pollution",
+        "Regex DoS"
+      ],
+      "cwes_found": [
+        "CWE-1321",
+        "CWE-1333",
+        "CWE-330",
+        "CWE-352",
+        "CWE-601",
+        "CWE-798"
+      ],
+      "errors": [
+        {
+          "file": "public/js/bootstrap.min.js",
+          "error": "Skipped (appears to be minified)"
+        },
+        {
+          "file": "public/js/jquery.js",
+          "error": "Skipped (appears to be minified)"
+        }
+      ]
+    },
+    {
+      "project": "vuln-nodejs-app",
+      "language": "javascript",
+      "scanner_port": 9002,
+      "scan_id": "6ae1cda5-53e5-4e5e-823e-051af583885d",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:44.396323",
+      "files_collected": 19,
+      "files_scanned": 15,
+      "scan_duration_seconds": 0.3,
+      "total_vulnerabilities": 39,
+      "severity_counts": {
+        "critical": 3,
+        "high": 17,
+        "medium": 12,
+        "low": 7,
+        "info": 0
+      },
+      "vulnerability_categories": [
+        "Command Injection",
+        "Cross-Site Scripting (XSS)",
+        "Hardcoded Secrets",
+        "Insecure Cookie",
+        "Insecure Random",
+        "Missing Authentication",
+        "NoSQL Injection",
+        "Prototype Pollution",
+        "React Security",
+        "Regex DoS",
+        "Security Headers",
+        "Timing Attack",
+        "Unsafe Deserialization"
+      ],
+      "cwes_found": [
+        "CWE-1321",
+        "CWE-1333",
+        "CWE-208",
+        "CWE-306",
+        "CWE-330",
+        "CWE-502",
+        "CWE-614",
+        "CWE-693",
+        "CWE-78",
+        "CWE-79",
+        "CWE-798",
+        "CWE-943"
+      ],
+      "errors": [
+        {
+          "file": "assets/js/bootstrap.min.js",
+          "error": "Skipped (appears to be minified)"
+        },
+        {
+          "file": "assets/js/bootstrap-datepicker.min.js",
+          "error": "Skipped (appears to be minified)"
+        },
+        {
+          "file": "assets/js/jquery-3.6.0.min.js",
+          "error": "Skipped (appears to be minified)"
+        },
+        {
+          "file": "assets/js/popper.min.js",
+          "error": "Skipped (appears to be minified)"
+        }
+      ]
+    },
+    {
+      "project": "WebGoat",
+      "language": "java",
+      "scanner_port": 9004,
+      "scan_id": "ebeb403f-b213-45f8-9e48-efaa9a8bd86a",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:44.848761",
+      "files_collected": 400,
+      "files_scanned": 390,
+      "scan_duration_seconds": 0.4,
+      "total_vulnerabilities": 0,
+      "severity_counts": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "info": 0
+      },
+      "vulnerability_categories": [],
+      "cwes_found": [],
+      "errors": [
+        "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+        "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+        "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+        "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+        "Error: java.lang.AssertionError: Unable to categorise token kind 2147483647 -- has it recently been added to the grammar but not classified within TokenTypes.java, perhaps?",
+        "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+        "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+        "Error: java.lang.AssertionError: Unable to categorise token kind 10 -- has it recently been added to the grammar but not classified within TokenTypes.java, perhaps?",
+        "Error: java.lang.AssertionError: Unable to categorise token kind 2147483647 -- has it recently been added to the grammar but not classified within TokenTypes.java, perhaps?",
+        "Error: java.lang.AssertionError: Unable to categorise token kind 2147483647 -- has it recently been added to the grammar but not classified within TokenTypes.java, perhaps?"
+      ]
+    },
+    {
+      "project": "JavaVulnerableLab",
+      "language": "java",
+      "scanner_port": 9004,
+      "scan_id": "1175ef93-898c-4284-be9d-497dae74e55b",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:44.874853",
+      "files_collected": 60,
+      "files_scanned": 14,
+      "scan_duration_seconds": 0.02,
+      "total_vulnerabilities": 0,
+      "severity_counts": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "info": 0
+      },
+      "vulnerability_categories": [],
+      "cwes_found": [],
+      "errors": [
+        "Error: java.lang.AssertionError: A reference was unexpectedly null."
+      ]
+    },
+    {
+      "project": "vuln-dotnet-alt",
+      "language": "java",
+      "scanner_port": 9004,
+      "scan_id": "5d2a7735-5659-44f0-bbc9-c76194a2956b",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:44.995123",
+      "files_collected": 90,
+      "files_scanned": 88,
+      "scan_duration_seconds": 0.11,
+      "total_vulnerabilities": 0,
+      "severity_counts": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "info": 0
+      },
+      "vulnerability_categories": [],
+      "cwes_found": [],
+      "errors": [
+        "Error: java.lang.AssertionError: A string was unexpectedly empty.",
+        "Error: java.lang.AssertionError: A string was unexpectedly empty."
+      ]
+    },
+    {
+      "project": "WebGoat.Net",
+      "language": "csharp",
+      "scanner_port": 9003,
+      "scan_id": "57e20be8-8215-42a7-81f8-c5d1aeba7924",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:45.212977",
+      "files_collected": 150,
+      "files_scanned": 150,
+      "scan_duration_seconds": 0.21,
+      "total_vulnerabilities": 17,
+      "severity_counts": {
+        "critical": 4,
+        "high": 2,
+        "medium": 9,
+        "low": 2,
+        "info": 0
+      },
+      "vulnerability_categories": [
+        "Hardcoded Credentials",
+        "Information Exposure Through Log",
+        "Injection",
+        "Insecure Deserialization",
+        "Open Redirect",
+        "Timing Attack",
+        "Weak Cryptography",
+        "XML External Entity"
+      ],
+      "cwes_found": [
+        "CWE-208",
+        "CWE-327",
+        "CWE-502",
+        "CWE-532",
+        "CWE-601",
+        "CWE-611",
+        "CWE-798",
+        "CWE-89"
+      ],
+      "errors": []
+    },
+    {
+      "project": "govwa",
+      "language": "go",
+      "scanner_port": 9005,
+      "scan_id": "59b99ff3-482b-48be-b65c-6897e058c73a",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:45.244433",
+      "files_collected": 20,
+      "files_scanned": 20,
+      "scan_duration_seconds": 0.03,
+      "total_vulnerabilities": 21,
+      "severity_counts": {
+        "critical": 1,
+        "high": 3,
+        "medium": 17,
+        "low": 0,
+        "info": 0
+      },
+      "vulnerability_categories": [
+        "Error Handling",
+        "Information Disclosure",
+        "Missing Authentication",
+        "Nil Pointer Dereference",
+        "Open Redirect",
+        "Resource Leak",
+        "SQL Injection",
+        "Timing Attack",
+        "Weak Cryptography"
+      ],
+      "cwes_found": [
+        "CWE-208",
+        "CWE-209",
+        "CWE-306",
+        "CWE-327",
+        "CWE-391",
+        "CWE-476",
+        "CWE-601",
+        "CWE-772",
+        "CWE-89"
+      ],
+      "errors": []
+    },
+    {
+      "project": "DVWA",
+      "language": "php",
+      "scanner_port": 9006,
+      "scan_id": "ec25633e-8e93-41ca-8068-249ecdcd2bab",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:46.490609",
+      "files_collected": 167,
+      "files_scanned": 167,
+      "scan_duration_seconds": 1.23,
+      "total_vulnerabilities": 278,
+      "severity_counts": {
+        "critical": 0,
+        "high": 134,
+        "medium": 125,
+        "low": 19,
+        "info": 0
+      },
+      "vulnerability_categories": [
+        "CSRF",
+        "Code Injection",
+        "Command Injection",
+        "File Upload",
+        "Hardcoded Secrets",
+        "Information Disclosure",
+        "Insecure Randomness",
+        "Missing Authentication",
+        "Missing Input Validation",
+        "Open Redirect",
+        "SQL Injection",
+        "Timing Attack",
+        "Type Juggling",
+        "Weak Cryptography"
+      ],
+      "cwes_found": [
+        "CWE-1025",
+        "CWE-20",
+        "CWE-200",
+        "CWE-208",
+        "CWE-209",
+        "CWE-306",
+        "CWE-327",
+        "CWE-328",
+        "CWE-330",
+        "CWE-352",
+        "CWE-434",
+        "CWE-601",
+        "CWE-78",
+        "CWE-798",
+        "CWE-89",
+        "CWE-94"
+      ],
+      "errors": []
+    },
+    {
+      "project": "railsgoat",
+      "language": "ruby",
+      "scanner_port": 9007,
+      "scan_id": "67b2935e-e359-4523-95a0-a12e62437709",
+      "status": "COMPLETED",
+      "timestamp": "2026-03-08T16:39:47.056467",
+      "files_collected": 142,
+      "files_scanned": 108,
+      "scan_duration_seconds": 0.54,
+      "total_vulnerabilities": 64,
+      "severity_counts": {
+        "critical": 7,
+        "high": 26,
+        "medium": 10,
+        "low": 21,
+        "info": 0
+      },
+      "vulnerability_categories": [
+        "Command Injection",
+        "Deserialization",
+        "Hardcoded Secrets",
+        "Information Disclosure",
+        "Mass Assignment",
+        "Null Safety",
+        "Race Condition",
+        "Regex DoS",
+        "SQL Injection",
+        "Timing Attack",
+        "Unsafe Reflection",
+        "Weak Cryptography",
+        "XSS"
+      ],
+      "cwes_found": [
+        "CWE-1333",
+        "CWE-208",
+        "CWE-209",
+        "CWE-328",
+        "CWE-367",
+        "CWE-470",
+        "CWE-476",
+        "CWE-502",
+        "CWE-78",
+        "CWE-79",
+        "CWE-798",
+        "CWE-89",
+        "CWE-915"
+      ],
+      "errors": []
+    }
+  ]
+}

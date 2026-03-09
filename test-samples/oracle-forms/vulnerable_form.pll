@@ -1,0 +1,94 @@
+-- Oracle Forms PL/SQL Library - Vulnerable Code
+-- This file simulates PL/SQL code within Oracle Forms library
+
+PACKAGE BODY form_utils IS
+
+    -- Dynamic SQL in form helper
+    PROCEDURE search_employees(p_criteria IN VARCHAR2) IS
+        v_sql VARCHAR2(4000);
+        TYPE ref_cur IS REF CURSOR;
+        v_cursor ref_cur;
+    BEGIN
+        v_sql := 'SELECT * FROM employees WHERE ' || p_criteria;
+        EXECUTE IMMEDIATE v_sql;
+        OPEN v_cursor FOR v_sql;
+    END search_employees;
+
+    -- Hardcoded connection
+    PROCEDURE connect_to_db IS
+    BEGIN
+        password := 'FormAdmin2024!';
+        LOGON('formuser/formpass@PRODDB');
+    END connect_to_db;
+
+    -- File upload without validation
+    PROCEDURE upload_document(p_path IN VARCHAR2) IS
+    BEGIN
+        READ_IMAGE_FILE(p_path, 'TIFF', 'DOCUMENTS.IMAGE');
+        HOST('mv /tmp/upload/* /var/data/documents/');
+    END upload_document;
+
+    -- Navigation without auth check
+    PROCEDURE navigate_to_admin IS
+    BEGIN
+        CALL_FORM('ADMIN_SETTINGS');
+        OPEN_FORM('USER_MANAGEMENT', ACTIVATE);
+    END navigate_to_admin;
+
+    -- URL with user input
+    PROCEDURE open_report(p_report_id IN VARCHAR2) IS
+    BEGIN
+        WEB.SHOW_DOCUMENT('http://reports.local/view?id=' || p_report_id, '_blank');
+    END open_report;
+
+    -- Bean area usage
+    PROCEDURE invoke_java_bean IS
+    BEGIN
+        FBEAN.INVOKE('SecurityBean', 1, 'processData');
+        SET_CUSTOM_PROPERTY('JAVA_PANEL', 1, 'Execute', 'doAction');
+    END invoke_java_bean;
+
+    -- SET_BLOCK_PROPERTY with dynamic WHERE
+    PROCEDURE filter_data(p_filter IN VARCHAR2) IS
+    BEGIN
+        SET_BLOCK_PROPERTY('DATA_BLOCK', DEFAULT_WHERE, 'status = ''' || p_filter || '''');
+    END filter_data;
+
+    -- Record group with user input
+    PROCEDURE populate_lov(p_dept IN VARCHAR2) IS
+    BEGIN
+        POPULATE_GROUP_WITH_QUERY('DEPT_RG', 'SELECT name FROM depts WHERE id = ''' || p_dept || '''');
+    END populate_lov;
+
+    -- Alert with error details
+    PROCEDURE handle_error IS
+    BEGIN
+        SET_ALERT_PROPERTY('ERR_ALERT', ALERT_MESSAGE_TEXT, 'Error occurred: ' || SQLERRM || ' Code: ' || SQLCODE);
+        MESSAGE('Debug: exception details - ' || SQLERRM);
+    END handle_error;
+
+    -- Using GET_PARAMETER
+    PROCEDURE process_param IS
+        v_param VARCHAR2(200);
+    BEGIN
+        v_param := GET_PARAMETER('USER_INPUT');
+        EXECUTE IMMEDIATE 'SELECT * FROM data WHERE key = ''' || v_param || '''';
+    END process_param;
+
+    -- Command injection via CLIENT_HOST
+    PROCEDURE run_script(p_script IN VARCHAR2) IS
+    BEGIN
+        CLIENT_HOST('bash -c ' || p_script);
+        HOST('/bin/sh -c "backup ' || p_script || '"');
+    END run_script;
+
+    -- DML in trigger without commit
+    PROCEDURE save_audit IS
+    BEGIN
+        INSERT INTO audit_log (action, user_name, ts)
+        VALUES ('LOGIN', :PARAMETER.USERNAME, SYSDATE);
+        -- Missing COMMIT_FORM
+        -- Missing EXCEPTION handler
+    END;
+
+END form_utils;

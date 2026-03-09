@@ -1,0 +1,34 @@
+{
+  "project": "WebGoat",
+  "language": "java",
+  "scanner_port": 9004,
+  "scan_id": "ebeb403f-b213-45f8-9e48-efaa9a8bd86a",
+  "status": "COMPLETED",
+  "timestamp": "2026-03-08T16:39:44.848761",
+  "files_collected": 400,
+  "files_scanned": 390,
+  "scan_duration_seconds": 0.4,
+  "total_vulnerabilities": 0,
+  "severity_counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "vulnerability_categories": [],
+  "cwes_found": [],
+  "vulnerabilities": [],
+  "errors": [
+    "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+    "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+    "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+    "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+    "Error: java.lang.AssertionError: Unable to categorise token kind 2147483647 -- has it recently been added to the grammar but not classified within TokenTypes.java, perhaps?",
+    "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+    "Error: java.lang.AssertionError: A reference was unexpectedly null.",
+    "Error: java.lang.AssertionError: Unable to categorise token kind 10 -- has it recently been added to the grammar but not classified within TokenTypes.java, perhaps?",
+    "Error: java.lang.AssertionError: Unable to categorise token kind 2147483647 -- has it recently been added to the grammar but not classified within TokenTypes.java, perhaps?",
+    "Error: java.lang.AssertionError: Unable to categorise token kind 2147483647 -- has it recently been added to the grammar but not classified within TokenTypes.java, perhaps?"
+  ]
+}

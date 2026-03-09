@@ -1,0 +1,51 @@
+---
+- name: Vulnerable Ansible Playbook
+  hosts: all
+  become: true
+  vars:
+    db_password: MySuperSecretPass123
+    api_token: ghp_FAKE_TOKEN_TEST_GITHUB_TOKEN_FOR_TESTING_1234
+    admin_secret_key: my-very-secret-key-value
+
+  tasks:
+    - name: Install packages from HTTP repo
+      yum:
+        name: httpd
+        state: present
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: "false"
+
+    - name: Create user with password
+      user:
+        name: admin
+        password: "ChangeMe123!"
+        state: present
+
+    - name: Run arbitrary command
+      shell: curl http://insecure-repo.example.com/setup.sh | bash
+
+    - name: Copy config with weak permissions
+      copy:
+        src: /tmp/config
+        dest: /etc/app/config
+        mode: "0777"
+
+    - name: Set credentials
+      template:
+        src: db.conf.j2
+        dest: /etc/db.conf
+        mode: "0666"
+
+    - name: Download binary without HTTPS
+      uri:
+        url: http://releases.example.com/app-v2.tar.gz
+        dest: /tmp/app.tar.gz
+
+    - name: Restart service
+      service:
+        name: httpd
+        state: restarted
+
+    - name: Debug task with vault password
+      debug:
+        msg: "vault_password is stored here"

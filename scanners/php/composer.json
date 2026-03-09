@@ -1,0 +1,8 @@
+{
+    "name": "sast/php-scanner",
+    "description": "PHP SAST Scanner",
+    "type": "project",
+    "require": {
+        "nikic/php-parser": "^5.7"
+    }
+}

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module Name="VULNERABLE_FORM" ConsoleWindow="CONSOLE" Version="12.2.1">
+
+  <!-- Form with various security vulnerabilities for scanner testing -->
+
+  <DataBlock Name="EMPLOYEES" QueryDataSourceName="EMPLOYEES"
+             InsertAllowed="true" UpdateAllowed="true" DeleteAllowed="true">
+
+    <Item Name="EMPLOYEE_ID" ItemType="TEXT" Visible="true"/>
+    <Item Name="EMPLOYEE_NAME" ItemType="TEXT" Visible="true"/>
+    <Item Name="SALARY" ItemType="TEXT" Visible="true"/>
+    <Item Name="PASSWORD_HASH" ItemType="TEXT" Visible="false"/>
+    <Item Name="SECRET_TOKEN" ItemType="TEXT" Visible="false"/>
+    <Item Name="SSN" ItemType="TEXT" Visible="false"/>
+
+    <Trigger Name="POST-QUERY" TriggerText="
+      BEGIN
+        -- OFRM-SQLI-001: Dynamic SQL in trigger
+        EXECUTE IMMEDIATE 'SELECT salary FROM emp WHERE id = ' || :EMPLOYEES.EMPLOYEE_ID;
+
+        -- OFRM-INFO-002: Debug output
+        DBMS_OUTPUT.PUT_LINE('Processing employee: ' || :EMPLOYEES.EMPLOYEE_NAME);
+      END;
+    "/>
+
+    <Trigger Name="WHEN-BUTTON-PRESSED" TriggerText="
+      DECLARE
+        v_sql VARCHAR2(4000);
+        v_password VARCHAR2(100);
+      BEGIN
+        -- OFRM-SQLI-002: Form item in dynamic SQL
+        v_sql := 'UPDATE employees SET salary = ' || :EMPLOYEES.SALARY || ' WHERE id = ' || :EMPLOYEES.EMPLOYEE_ID;
+        EXECUTE IMMEDIATE v_sql;
+
+        -- OFRM-CRED-001: Hardcoded password
+        password := 'Admin123!';
+
+        -- OFRM-CRED-003: Connection string
+        LOGON('scott/tiger@PRODDB');
+
+        -- OFRM-INFO-001: Sensitive data in alert
+        SET_ALERT_PROPERTY('ERROR_ALERT', ALERT_MESSAGE_TEXT, 'Database error: ' || SQLERRM);
+
+        -- OFRM-HIDE-001: Sensitive data in hidden item
+        :EMPLOYEES.PASSWORD_HASH := v_password;
+        :EMPLOYEES.SECRET_TOKEN := 'bearer_abc123xyz';
+
+        -- DML without commit handling
+        INSERT INTO audit_log (action) VALUES ('update');
+        DELETE FROM temp_records WHERE id = :EMPLOYEES.EMPLOYEE_ID;
+      END;
+    "/>
+
+    <Trigger Name="WHEN-VALIDATE-ITEM" TriggerText="
+      BEGIN
+        -- OFRM-CLNT-001: Client-side only validation
+        IF :EMPLOYEES.SALARY IS NULL THEN
+          MESSAGE('Salary cannot be null');
+          RAISE FORM_TRIGGER_FAILURE;
+        END IF;
+
+        IF :EMPLOYEES.SALARY < 0 THEN
+          MESSAGE('Salary must be positive');
+          RAISE FORM_TRIGGER_FAILURE;
+        END IF;
+      END;
+    "/>
+
+  </DataBlock>
+
+  <DataBlock Name="SEARCH_BLOCK">
+
+    <Trigger Name="WHEN-BUTTON-PRESSED" TriggerText="
+      DECLARE
+        v_where VARCHAR2(4000);
+        v_query VARCHAR2(4000);
+      BEGIN
+        -- OFRM-SQLI-003: SET_BLOCK_PROPERTY with concatenation
+        v_where := 'department_id = ' || :SEARCH_BLOCK.DEPT_ID;
+        SET_BLOCK_PROPERTY('EMPLOYEES', DEFAULT_WHERE, v_where || ' AND status = ''' || :SEARCH_BLOCK.STATUS || '''');
+        EXECUTE_QUERY;
+
+        -- OFRM-LOV-001: Dynamic LOV query
+        SET_LOV_PROPERTY('DEPT_LOV', GROUP_NAME, 'SELECT name FROM departments WHERE region = ''' || :SEARCH_BLOCK.REGION || '''');
+
+        -- OFRM-LOV-002: Record group injection
+        POPULATE_GROUP_WITH_QUERY('DEPT_RG', 'SELECT id, name FROM departments WHERE type = ''' || :SEARCH_BLOCK.DEPT_TYPE || '''');
+
+        -- OFRM-RG-001: Dynamic record group with form item
+        POPULATE_GROUP_WITH_QUERY('EMP_RG', 'SELECT * FROM employees WHERE dept_id = ' || :SEARCH_BLOCK.DEPT_ID);
+
+        -- OFRM-NAV-001: Unprotected form navigation
+        CALL_FORM('ADMIN_PANEL');
+        OPEN_FORM('SALARY_REPORT', ACTIVATE);
+        NEW_FORM('PAYROLL_FORM');
+
+        -- OFRM-URL-001: URL parameter handling
+        WEB.SHOW_DOCUMENT('http://reports.internal/view?id=' || :SEARCH_BLOCK.REPORT_ID, '_blank');
+
+        -- OFRM-XSS-001: JavaScript injection via URL
+        WEB.SHOW_DOCUMENT('http://app.internal/page?name=' || :SEARCH_BLOCK.USER_NAME, '_self');
+
+        -- OFRM-CMD-001: HOST command injection
+        HOST('backup.sh ' || :SEARCH_BLOCK.BACKUP_PATH);
+        CLIENT_HOST('notepad.exe ' || :SEARCH_BLOCK.FILE_PATH);
+
+        -- OFRM-COMM-001: HTTP instead of HTTPS
+        WEB.SHOW_DOCUMENT('http://internal-api.company.com/data', '_blank');
+
+        -- OFRM-FILE-001: File operations without validation
+        READ_IMAGE_FILE(:SEARCH_BLOCK.IMAGE_PATH, 'PNG', 'EMPLOYEES.PHOTO');
+
+        -- OFRM-BEAN-001: Java bean invocation
+        FBEAN.INVOKE('CustomBean', 1, 'executeAction');
+        SET_CUSTOM_PROPERTY('JAVA_AREA', 1, 'RunCommand', :SEARCH_BLOCK.CMD);
+      END;
+    "/>
+
+  </DataBlock>
+
+  <FormTrigger Name="WHEN-NEW-FORM-INSTANCE" TriggerText="
+    BEGIN
+      -- OFRM-PROP-001: No access control check
+      -- OFRM-SESS-001: No session timeout
+      MESSAGE('Welcome to the application');
+
+      -- OFRM-CRED-002: Hardcoded logon
+      SET_APPLICATION_PROPERTY(USERNAME, 'app_user');
+      LOGON('app_user', 'AppPass123!');
+
+      -- OFRM-SESS-002: Logon without session validation
+      SET_APPLICATION_PROPERTY(PASSWORD, 'SecretPass!');
+
+      -- OFRM-SQLI-004: DBMS_SQL in form
+      DECLARE
+        v_cur INTEGER;
+      BEGIN
+        v_cur := DBMS_SQL.OPEN_CURSOR;
+        DBMS_SQL.PARSE(v_cur, 'SELECT * FROM config', DBMS_SQL.NATIVE);
+        DBMS_SQL.CLOSE_CURSOR(v_cur);
+      END;
+    END;
+  "/>
+
+  <FormTrigger Name="ON-LOGON" TriggerText="
+    BEGIN
+      -- OFRM-SESS-002: ON-LOGON without session validation
+      LOGON(:PARAMETER.USERNAME, :PARAMETER.PASSWORD || '@' || :PARAMETER.DATABASE);
+      SET_APPLICATION_PROPERTY(CURSOR_STYLE, 'DEFAULT');
+    END;
+  "/>
+
+</Module>

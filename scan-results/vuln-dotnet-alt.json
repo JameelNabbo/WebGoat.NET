@@ -1,0 +1,26 @@
+{
+  "project": "vuln-dotnet-alt",
+  "language": "java",
+  "scanner_port": 9004,
+  "scan_id": "5d2a7735-5659-44f0-bbc9-c76194a2956b",
+  "status": "COMPLETED",
+  "timestamp": "2026-03-08T16:39:44.995123",
+  "files_collected": 90,
+  "files_scanned": 88,
+  "scan_duration_seconds": 0.11,
+  "total_vulnerabilities": 0,
+  "severity_counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "vulnerability_categories": [],
+  "cwes_found": [],
+  "vulnerabilities": [],
+  "errors": [
+    "Error: java.lang.AssertionError: A string was unexpectedly empty.",
+    "Error: java.lang.AssertionError: A string was unexpectedly empty."
+  ]
+}

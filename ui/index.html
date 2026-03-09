@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAST Offline Scanner</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-card: #16213e;
+      --bg-accent: #0f3460;
+      --highlight: #e94560;
+      --text-primary: #e8e8e8;
+      --text-secondary: #a0a0b8;
+      --text-muted: #6c6c80;
+      --border: #2a2a4a;
+      --success: #00c853;
+      --critical: #ff1744;
+      --high: #ff6d00;
+      --medium: #ffd600;
+      --low: #448aff;
+      --info: #00b0ff;
+      --radius: 8px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--bg-accent); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--highlight); }
+
+    /* Layout */
+    .app-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px; background: var(--bg-card); border-radius: var(--radius);
+      margin-bottom: 24px; border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo-icon {
+      width: 40px; height: 40px; background: linear-gradient(135deg, var(--highlight), #ff6b6b);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 18px; color: white;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .header h1 span { color: var(--highlight); }
+    .header-version {
+      font-size: 12px; color: var(--text-muted); background: var(--bg-accent);
+      padding: 2px 10px; border-radius: 12px;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex; gap: 4px; background: var(--bg-card); padding: 4px;
+      border-radius: var(--radius); margin-bottom: 24px; border: 1px solid var(--border);
+    }
+    .nav-tab {
+      padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;
+      font-weight: 500; color: var(--text-secondary); transition: all 0.2s;
+      border: none; background: none; flex: 1; text-align: center;
+    }
+    .nav-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+    .nav-tab.active {
+      background: var(--bg-accent); color: white;
+      box-shadow: 0 2px 8px rgba(15,52,96,0.4);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card); border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      padding: 24px; margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 16px; font-weight: 600; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title .icon { font-size: 18px; }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 12px; padding: 60px 40px;
+      text-align: center; cursor: pointer; transition: all 0.3s;
+      background: rgba(15,52,96,0.15); position: relative; overflow: hidden;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--highlight); background: rgba(233,69,96,0.08);
+    }
+    .upload-zone.drag-over::after {
+      content: ''; position: absolute; inset: 0;
+      background: rgba(233,69,96,0.05); pointer-events: none;
+    }
+    .upload-icon {
+      width: 80px; height: 80px; margin: 0 auto 20px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--bg-accent), rgba(233,69,96,0.3));
+      display: flex; align-items: center; justify-content: center; font-size: 36px;
+    }
+    .upload-zone h3 { font-size: 20px; margin-bottom: 8px; }
+    .upload-zone p { color: var(--text-secondary); font-size: 14px; }
+    .upload-hint { color: var(--text-muted) !important; font-size: 12px !important; margin-top: 12px; }
+    .file-info {
+      display: inline-flex; align-items: center; gap: 8px; margin-top: 16px;
+      background: var(--bg-accent); padding: 8px 16px; border-radius: 20px;
+      font-size: 13px;
+    }
+    .file-info .file-size { color: var(--highlight); font-weight: 600; }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: all 0.2s; display: inline-flex;
+      align-items: center; gap: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--highlight), #d63050);
+      color: white; box-shadow: 0 4px 12px rgba(233,69,96,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: var(--bg-accent); color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #1a4a7a; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+    /* Scanner Grid */
+    .scanner-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .scanner-card {
+      background: var(--bg-primary); border-radius: 8px; padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px; border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .scanner-card:hover { border-color: var(--bg-accent); }
+    .scanner-status {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .scanner-status.online {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(0,200,83,0.5);
+      animation: pulse-green 2s infinite;
+    }
+    .scanner-status.offline { background: #666; }
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 4px rgba(0,200,83,0.4); }
+      50% { box-shadow: 0 0 12px rgba(0,200,83,0.7); }
+    }
+    .scanner-name { font-size: 13px; font-weight: 500; }
+    .scanner-lang { font-size: 11px; color: var(--text-muted); }
+
+    /* Summary Cards */
+    .summary-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
+    .summary-card {
+      background: var(--bg-card); border-radius: var(--radius); padding: 20px;
+      border: 1px solid var(--border); text-align: center; transition: transform 0.2s;
+    }
+    .summary-card:hover { transform: translateY(-2px); }
+    .summary-card .count {
+      font-size: 36px; font-weight: 800; line-height: 1.2;
+      background: linear-gradient(to bottom, currentColor, rgba(255,255,255,0.6));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .summary-card .label {
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px; margin-top: 4px; color: var(--text-secondary);
+    }
+    .summary-card.total { border-top: 3px solid var(--text-primary); }
+    .summary-card.total .count { color: var(--text-primary); }
+    .summary-card.critical { border-top: 3px solid var(--critical); }
+    .summary-card.critical .count { color: var(--critical); }
+    .summary-card.high { border-top: 3px solid var(--high); }
+    .summary-card.high .count { color: var(--high); }
+    .summary-card.medium { border-top: 3px solid var(--medium); }
+    .summary-card.medium .count { color: var(--medium); }
+    .summary-card.low { border-top: 3px solid var(--low); }
+    .summary-card.low .count { color: var(--low); }
+    .summary-card.info-card { border-top: 3px solid var(--info); }
+    .summary-card.info-card .count { color: var(--info); }
+
+    /* Pie Chart */
+    .chart-container {
+      display: flex; align-items: center; justify-content: center; gap: 40px;
+      padding: 20px;
+    }
+    .pie-chart {
+      width: 200px; height: 200px; border-radius: 50%; position: relative;
+      flex-shrink: 0;
+    }
+    .pie-center {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 100px; height: 100px; background: var(--bg-card); border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .pie-center .total-num { font-size: 28px; font-weight: 800; }
+    .pie-center .total-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .chart-legend { display: flex; flex-direction: column; gap: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .legend-color { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+    .legend-count { font-weight: 700; min-width: 30px; }
+    .legend-label { color: var(--text-secondary); }
+
+    /* Filters */
+    .filters-bar {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+      margin-bottom: 16px;
+    }
+    .search-input {
+      flex: 1; min-width: 200px; padding: 10px 16px; background: var(--bg-primary);
+      border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);
+      font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--highlight); }
+    .search-input::placeholder { color: var(--text-muted); }
+    .filter-select {
+      padding: 10px 16px; background: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text-primary); font-size: 14px; outline: none;
+      cursor: pointer; min-width: 140px;
+    }
+    .filter-select:focus { border-color: var(--highlight); }
+    .filter-select option { background: var(--bg-card); color: var(--text-primary); }
+
+    /* Vulnerability Table */
+    .vuln-table-wrapper { overflow-x: auto; }
+    .vuln-table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      font-size: 13px;
+    }
+    .vuln-table th {
+      text-align: left; padding: 12px 14px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted);
+      border-bottom: 2px solid var(--border); cursor: pointer; user-select: none;
+      white-space: nowrap; position: sticky; top: 0; background: var(--bg-card);
+    }
+    .vuln-table th:hover { color: var(--text-primary); }
+    .vuln-table th .sort-arrow { margin-left: 4px; font-size: 10px; }
+    .vuln-table td {
+      padding: 12px 14px; border-bottom: 1px solid rgba(42,42,74,0.5);
+      vertical-align: middle;
+    }
+    .vuln-table tr.clickable { cursor: pointer; transition: background 0.15s; }
+    .vuln-table tr.clickable:hover { background: rgba(15,52,96,0.3); }
+    .vuln-table tr.expanded-row { background: rgba(15,52,96,0.2); }
+
+    /* Severity Badge */
+    .severity-badge {
+      display: inline-flex; align-items: center; padding: 3px 10px;
+      border-radius: 4px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .severity-badge.critical { background: rgba(255,23,68,0.15); color: var(--critical); }
+    .severity-badge.high { background: rgba(255,109,0,0.15); color: var(--high); }
+    .severity-badge.medium { background: rgba(255,214,0,0.15); color: var(--medium); }
+    .severity-badge.low { background: rgba(68,138,255,0.15); color: var(--low); }
+    .severity-badge.info { background: rgba(0,176,255,0.15); color: var(--info); }
+
+    /* Confidence Badge */
+    .confidence-badge {
+      display: inline-flex; padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.08);
+      color: var(--text-secondary);
+    }
+
+    /* Detail Panel */
+    .detail-panel {
+      background: var(--bg-primary); border-radius: 8px; margin: 8px 14px 14px;
+      padding: 20px; border: 1px solid var(--border);
+    }
+    .detail-section { margin-bottom: 20px; }
+    .detail-section:last-child { margin-bottom: 0; }
+    .detail-section-title {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--highlight); margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .code-block {
+      background: #0d1117; border-radius: 8px; padding: 16px; overflow-x: auto;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px; line-height: 1.7; border: 1px solid #21262d;
+    }
+    .code-line { display: flex; }
+    .code-line-num {
+      color: #484f58; min-width: 40px; text-align: right; padding-right: 16px;
+      user-select: none; flex-shrink: 0;
+    }
+    .code-line-content { color: #c9d1d9; white-space: pre-wrap; word-break: break-all; }
+    .code-line.highlighted { background: rgba(233,69,96,0.12); }
+    .code-line.highlighted .code-line-content { color: #ffa0a0; }
+
+    .data-flow-list { list-style: none; }
+    .data-flow-item {
+      display: flex; align-items: flex-start; gap: 12px; padding: 8px 0;
+      border-left: 2px solid var(--bg-accent); padding-left: 16px; margin-left: 8px;
+      position: relative;
+    }
+    .data-flow-item::before {
+      content: ''; position: absolute; left: -6px; top: 12px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--bg-accent); border: 2px solid var(--highlight);
+    }
+    .data-flow-step {
+      font-size: 10px; font-weight: 700; color: var(--highlight);
+      background: rgba(233,69,96,0.15); padding: 2px 8px; border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .data-flow-text { font-size: 13px; color: var(--text-secondary); }
+
+    .owasp-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .owasp-tag {
+      padding: 4px 12px; background: rgba(15,52,96,0.6); border-radius: 4px;
+      font-size: 12px; font-weight: 600; color: var(--info);
+      border: 1px solid rgba(0,176,255,0.2);
+    }
+
+    .remediation-text {
+      font-size: 14px; color: var(--text-secondary); line-height: 1.8;
+      background: rgba(0,200,83,0.05); padding: 16px; border-radius: 8px;
+      border-left: 3px solid var(--success);
+    }
+
+    /* Progress */
+    .progress-overlay {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 60px 20px; text-align: center;
+    }
+    .spinner {
+      width: 60px; height: 60px; border: 4px solid var(--border);
+      border-top-color: var(--highlight); border-radius: 50%;
+      animation: spin 1s linear infinite; margin-bottom: 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-text { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .progress-sub { color: var(--text-secondary); font-size: 14px; }
+    .progress-bar-container {
+      width: 300px; height: 6px; background: var(--border); border-radius: 3px;
+      margin-top: 20px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; background: linear-gradient(90deg, var(--highlight), #ff6b6b);
+      border-radius: 3px; transition: width 0.5s ease;
+      animation: progress-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes progress-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: var(--text-muted);
+    }
+    .empty-state .empty-icon {
+      font-size: 48px; margin-bottom: 16px; opacity: 0.5;
+    }
+    .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text-secondary); }
+    .empty-state p { font-size: 14px; }
+
+    /* Status bar */
+    .status-bar {
+      display: flex; align-items: center; gap: 16px; padding: 10px 16px;
+      background: var(--bg-card); border-radius: 6px; margin-bottom: 16px;
+      border: 1px solid var(--border); font-size: 13px;
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .status-dot.connected { background: var(--success); }
+    .status-dot.disconnected { background: var(--critical); }
+
+    /* Truncated text */
+    .truncate {
+      max-width: 250px; white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-path {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Toast */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+    .toast {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 20px; margin-bottom: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4); min-width: 280px;
+      display: flex; align-items: center; gap: 10px; font-size: 14px;
+      animation: toast-in 0.3s ease;
+    }
+    @keyframes toast-in {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--critical); }
+    .toast.info { border-left: 3px solid var(--info); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-container { flex-direction: column; }
+      .scanner-grid { grid-template-columns: repeat(2, 1fr); }
+      .filters-bar { flex-direction: column; }
+      .header { flex-direction: column; gap: 10px; text-align: center; }
+    }
+
+    /* Scan Config */
+    .scan-config {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;
+      justify-content: center;
+    }
+    .scan-config label {
+      font-size: 13px; color: var(--text-secondary); display: flex;
+      align-items: center; gap: 6px; cursor: pointer;
+    }
+    .scan-config input[type="checkbox"] {
+      accent-color: var(--highlight); width: 16px; height: 16px;
+    }
+
+    /* Results count */
+    .results-count {
+      font-size: 13px; color: var(--text-muted); padding: 8px 0;
+    }
+
+    /* Table max height with scroll */
+    .table-scroll {
+      max-height: 600px; overflow-y: auto; border-radius: var(--radius);
+    }
+
+    /* CWE link style */
+    .cwe-link {
+      color: var(--info); font-family: monospace; font-size: 12px;
+      text-decoration: none;
+    }
+    .cwe-link:hover { text-decoration: underline; }
+
+    .action-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+    }
+
+    /* Error display */
+    .error-box {
+      background: rgba(255,23,68,0.1); border: 1px solid rgba(255,23,68,0.3);
+      border-radius: 8px; padding: 16px; color: var(--critical); margin: 16px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+    const API_BASE = window.location.protocol + '//' + window.location.hostname + ':9000';
+
+    // ===== Toast System =====
+    function ToastContainer({ toasts, removeToast }) {
+      return (
+        <div className="toast-container">
+          {toasts.map(t => (
+            <div key={t.id} className={`toast ${t.type}`} onClick={() => removeToast(t.id)}>
+              <span>{t.type === 'success' ? '\u2713' : t.type === 'error' ? '\u2717' : '\u2139'}</span>
+              <span>{t.message}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function useToast() {
+      const [toasts, setToasts] = useState([]);
+      const addToast = useCallback((message, type = 'info') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+      }, []);
+      const removeToast = useCallback((id) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+      }, []);
+      return { toasts, addToast, removeToast };
+    }
+
+    // ===== Utility Functions =====
+    function formatFileSize(bytes) {
+      if (!bytes) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let i = 0;
+      let size = bytes;
+      while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+      return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+    }
+
+    function getSeverityClass(severity) {
+      if (!severity) return 'info';
+      const s = severity.toLowerCase();
+      if (s === 'critical') return 'critical';
+      if (s === 'high') return 'high';
+      if (s === 'medium' || s === 'moderate') return 'medium';
+      if (s === 'low') return 'low';
+      return 'info';
+    }
+
+    function getSeverityOrder(severity) {
+      const s = (severity || '').toLowerCase();
+      if (s === 'critical') return 0;
+      if (s === 'high') return 1;
+      if (s === 'medium' || s === 'moderate') return 2;
+      if (s === 'low') return 3;
+      return 4;
+    }
+
+    // ===== Pie Chart Component =====
+    function PieChart({ data }) {
+      const total = data.reduce((sum, d) => sum + d.value, 0);
+      if (total === 0) {
+        return (
+          <div className="chart-container">
+            <div style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No data to display</div>
+          </div>
+        );
+      }
+
+      let cumulative = 0;
+      const segments = data.filter(d => d.value > 0).map(d => {
+        const pct = (d.value / total) * 100;
+        const start = cumulative;
+        cumulative += pct;
+        return { ...d, pct, start, end: cumulative };
+      });
+
+      // Build conic-gradient
+      const gradientParts = [];
+      segments.forEach(s => {
+        gradientParts.push(`${s.color} ${s.start}% ${s.end}%`);
+      });
+      const gradient = `conic-gradient(${gradientParts.join(', ')})`;
+
+      return (
+        <div className="chart-container">
+          <div className="pie-chart" style={{ background: gradient }}>
+            <div className="pie-center">
+              <div className="total-num">{total}</div>
+              <div className="total-label">Total</div>
+            </div>
+          </div>
+          <div className="chart-legend">
+            {data.map((d, i) => (
+              <div key={i} className="legend-item">
+                <div className="legend-color" style={{ background: d.color }}></div>
+                <span className="legend-count">{d.value}</span>
+                <span className="legend-label">{d.label} ({total > 0 ? ((d.value / total) * 100).toFixed(1) : 0}%)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ===== Scanner Status Component =====
+    function ScannerDashboard({ scanners, loading, error, onRefresh }) {
+      const onlineCount = scanners.filter(s => s.status === 'online' || s.online).length;
+      return (
+        <div className="card">
+          <div className="card-title" style={{ justifyContent: 'space-between' }}>
+            <span>Scanner Fleet Status ({onlineCount}/{scanners.length} Online)</span>
+            <button className="btn btn-secondary btn-sm" onClick={onRefresh}>Refresh</button>
+          </div>
+          {loading && <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Loading scanners...</div>}
+          {error && <div className="error-box">{error}</div>}
+          {!loading && !error && (
+            <div className="scanner-grid">
+              {scanners.map((scanner, i) => {
+                const isOnline = scanner.status === 'online' || scanner.online;
+                return (
+                  <div key={i} className="scanner-card">
+                    <div className={`scanner-status ${isOnline ? 'online' : 'offline'}`}></div>
+                    <div>
+                      <div className="scanner-name">{scanner.name || scanner.scanner_name || `Scanner ${i+1}`}</div>
+                      <div className="scanner-lang">{scanner.language || scanner.type || 'Unknown'}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ===== Upload Component =====
+    function UploadPanel({ onScanStart, scanning }) {
+      const [file, setFile] = useState(null);
+      const [dragOver, setDragOver] = useState(false);
+      const fileInputRef = useRef(null);
+
+      const handleDrop = useCallback((e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const dropped = e.dataTransfer.files[0];
+        if (dropped && (dropped.name.endsWith('.zip') || dropped.name.endsWith('.tar.gz') || dropped.name.endsWith('.tgz'))) {
+          setFile(dropped);
+        }
+      }, []);
+
+      const handleFileSelect = useCallback((e) => {
+        if (e.target.files[0]) setFile(e.target.files[0]);
+      }, []);
+
+      const handleClick = () => { if (fileInputRef.current) fileInputRef.current.click(); };
+
+      return (
+        <div className="card">
+          <div className="card-title">Upload Source Code</div>
+          <div
+            className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            onClick={handleClick}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".zip,.tar.gz,.tgz"
+              style={{ display: 'none' }}
+              onChange={handleFileSelect}
+            />
+            <div className="upload-icon">{'\u2B06'}</div>
+            <h3>{file ? file.name : 'Drop your source code archive here'}</h3>
+            <p>{file ? 'File selected and ready to scan' : 'or click to browse files'}</p>
+            {file && (
+              <div className="file-info">
+                <span>{file.name}</span>
+                <span className="file-size">{formatFileSize(file.size)}</span>
+              </div>
+            )}
+            <p className="upload-hint">Supported formats: .zip, .tar.gz, .tgz</p>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <button
+              className="btn btn-primary"
+              disabled={!file || scanning}
+              onClick={() => file && onScanStart(file)}
+            >
+              {scanning ? 'Scanning...' : 'Start Scan'}
+            </button>
+            {file && (
+              <button
+                className="btn btn-secondary"
+                style={{ marginLeft: '12px' }}
+                onClick={(e) => { e.stopPropagation(); setFile(null); }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ===== Scan Progress Component =====
+    function ScanProgress({ progress, statusText }) {
+      return (
+        <div className="card">
+          <div className="progress-overlay">
+            <div className="spinner"></div>
+            <div className="progress-text">{statusText || 'Scanning in progress...'}</div>
+            <div className="progress-sub">Analyzing source code for vulnerabilities</div>
+            <div className="progress-bar-container">
+              <div className="progress-bar-fill" style={{ width: `${progress || 30}%` }}></div>
+            </div>
+            <div style={{ marginTop: '12px', color: 'var(--text-muted)', fontSize: '13px' }}>
+              {progress ? `${progress}% complete` : 'Please wait...'}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ===== Vulnerability Detail Component =====
+    function VulnDetail({ vuln }) {
+      const codeSnippet = vuln.code_snippet || vuln.codeSnippet || vuln.snippet || '';
+      const remediation = vuln.remediation || vuln.recommendation || vuln.fix || 'No remediation information available.';
+      const rawDataFlow = vuln.data_flow || vuln.dataFlow || vuln.trace || [];
+      const dataFlow = Array.isArray(rawDataFlow) ? rawDataFlow : [];
+      const rawOwasp = vuln.owasp || vuln.owaspMapping || [];
+      const owaspList = Array.isArray(rawOwasp) ? rawOwasp : (typeof rawOwasp === "string" && rawOwasp ? rawOwasp.split(",").map(s => s.trim()) : []);
+      const lineNum = vuln.line_number || vuln.lineNumber || vuln.line || 0;
+
+      const codeLines = codeSnippet ? codeSnippet.split('\n') : [];
+      const startLine = Math.max(1, lineNum - 3);
+
+      return (
+        <div className="detail-panel">
+          {codeLines.length > 0 && (
+            <div className="detail-section">
+              <div className="detail-section-title">Code Snippet</div>
+              <div className="code-block">
+                {codeLines.map((line, i) => {
+                  const currentLine = startLine + i;
+                  const isTarget = currentLine === lineNum;
+                  return (
+                    <div key={i} className={`code-line ${isTarget ? 'highlighted' : ''}`}>
+                      <span className="code-line-num">{currentLine}</span>
+                      <span className="code-line-content">{line || ' '}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="detail-section">
+            <div className="detail-section-title">Remediation</div>
+            <div className="remediation-text">{remediation}</div>
+          </div>
+
+          {dataFlow.length > 0 && (
+            <div className="detail-section">
+              <div className="detail-section-title">Data Flow Trace</div>
+              <ul className="data-flow-list">
+                {dataFlow.map((step, i) => (
+                  <li key={i} className="data-flow-item">
+                    <span className="data-flow-step">Step {i + 1}</span>
+                    <span className="data-flow-text">
+                      {typeof step === 'string' ? step : `${step.file || ''}:${step.line || ''} - ${step.description || step.text || ''}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {owaspList.length > 0 && (
+            <div className="detail-section">
+              <div className="detail-section-title">OWASP Mapping</div>
+              <div className="owasp-tags">
+                {owaspList.map((item, i) => (
+                  <span key={i} className="owasp-tag">{typeof item === 'string' ? item : item.name || item.id}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!codeLines.length && !dataFlow.length && !owaspList.length && (
+            <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '14px' }}>
+              Limited detail information available for this finding.
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ===== Results Dashboard =====
+    function ResultsDashboard({ results, onExport }) {
+      const [searchTerm, setSearchTerm] = useState('');
+      const [severityFilter, setSeverityFilter] = useState('all');
+      const [languageFilter, setLanguageFilter] = useState('all');
+      const [categoryFilter, setCategoryFilter] = useState('all');
+      const [sortField, setSortField] = useState('severity');
+      const [sortDir, setSortDir] = useState('asc');
+      const [expandedId, setExpandedId] = useState(null);
+
+      const vulns = results.vulnerabilities || results.findings || results.results || [];
+
+      const severityCounts = useMemo(() => {
+        const counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+        vulns.forEach(v => {
+          const sev = getSeverityClass(v.severity);
+          if (counts.hasOwnProperty(sev)) counts[sev]++;
+        });
+        return counts;
+      }, [vulns]);
+
+      const total = vulns.length;
+
+      const languages = useMemo(() => {
+        const set = new Set();
+        vulns.forEach(v => { if (v.language || v.lang) set.add(v.language || v.lang); });
+        return Array.from(set).sort();
+      }, [vulns]);
+
+      const categories = useMemo(() => {
+        const set = new Set();
+        vulns.forEach(v => { if (v.category || v.type) set.add(v.category || v.type); });
+        return Array.from(set).sort();
+      }, [vulns]);
+
+      const filtered = useMemo(() => {
+        let list = [...vulns];
+
+        if (severityFilter !== 'all') {
+          list = list.filter(v => getSeverityClass(v.severity) === severityFilter);
+        }
+        if (languageFilter !== 'all') {
+          list = list.filter(v => (v.language || v.lang) === languageFilter);
+        }
+        if (categoryFilter !== 'all') {
+          list = list.filter(v => (v.category || v.type) === categoryFilter);
+        }
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          list = list.filter(v =>
+            (v.title || v.name || '').toLowerCase().includes(term) ||
+            (v.file_path || v.filePath || v.file || '').toLowerCase().includes(term) ||
+            (v.cwe || '').toLowerCase().includes(term) ||
+            (v.category || v.type || '').toLowerCase().includes(term) ||
+            (v.description || '').toLowerCase().includes(term)
+          );
+        }
+
+        list.sort((a, b) => {
+          let cmp = 0;
+          if (sortField === 'severity') {
+            cmp = getSeverityOrder(a.severity) - getSeverityOrder(b.severity);
+          } else if (sortField === 'title') {
+            cmp = (a.title || a.name || '').localeCompare(b.title || b.name || '');
+          } else if (sortField === 'file') {
+            cmp = (a.file_path || a.filePath || a.file || '').localeCompare(b.file_path || b.filePath || b.file || '');
+          } else if (sortField === 'line') {
+            cmp = (a.line_number || a.lineNumber || a.line || 0) - (b.line_number || b.lineNumber || b.line || 0);
+          } else if (sortField === 'cwe') {
+            cmp = (a.cwe || '').localeCompare(b.cwe || '');
+          } else if (sortField === 'category') {
+            cmp = (a.category || a.type || '').localeCompare(b.category || b.type || '');
+          } else if (sortField === 'confidence') {
+            cmp = (a.confidence || '').localeCompare(b.confidence || '');
+          }
+          return sortDir === 'asc' ? cmp : -cmp;
+        });
+
+        return list;
+      }, [vulns, severityFilter, languageFilter, categoryFilter, searchTerm, sortField, sortDir]);
+
+      const handleSort = (field) => {
+        if (sortField === field) {
+          setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+        } else {
+          setSortField(field);
+          setSortDir('asc');
+        }
+      };
+
+      const sortArrow = (field) => {
+        if (sortField !== field) return '';
+        return sortDir === 'asc' ? ' \u25B2' : ' \u25BC';
+      };
+
+      const pieData = [
+        { label: 'Critical', value: severityCounts.critical, color: 'var(--critical)' },
+        { label: 'High', value: severityCounts.high, color: 'var(--high)' },
+        { label: 'Medium', value: severityCounts.medium, color: 'var(--medium)' },
+        { label: 'Low', value: severityCounts.low, color: 'var(--low)' },
+        { label: 'Info', value: severityCounts.info, color: 'var(--info)' },
+      ];
+
+      const scanMeta = results.scan_info || results.scanInfo || {};
+
+      return (
+        <div>
+          {/* Summary Cards */}
+          <div className="summary-grid">
+            <div className="summary-card total">
+              <div className="count">{total}</div>
+              <div className="label">Total Findings</div>
+            </div>
+            <div className="summary-card critical" onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')} style={{ cursor: 'pointer' }}>
+              <div className="count">{severityCounts.critical}</div>
+              <div className="label">Critical</div>
+            </div>
+            <div className="summary-card high" onClick={() => setSeverityFilter(severityFilter === 'high' ? 'all' : 'high')} style={{ cursor: 'pointer' }}>
+              <div className="count">{severityCounts.high}</div>
+              <div className="label">High</div>
+            </div>
+            <div className="summary-card medium" onClick={() => setSeverityFilter(severityFilter === 'medium' ? 'all' : 'medium')} style={{ cursor: 'pointer' }}>
+              <div className="count">{severityCounts.medium}</div>
+              <div className="label">Medium</div>
+            </div>
+            <div className="summary-card low" onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')} style={{ cursor: 'pointer' }}>
+              <div className="count">{severityCounts.low}</div>
+              <div className="label">Low</div>
+            </div>
+            <div className="summary-card info-card" onClick={() => setSeverityFilter(severityFilter === 'info' ? 'all' : 'info')} style={{ cursor: 'pointer' }}>
+              <div className="count">{severityCounts.info}</div>
+              <div className="label">Info</div>
+            </div>
+          </div>
+
+          {/* Pie Chart */}
+          <div className="card">
+            <div className="card-title">Severity Distribution</div>
+            <PieChart data={pieData} />
+          </div>
+
+          {/* Scan Metadata */}
+          {scanMeta && Object.keys(scanMeta).length > 0 && (
+            <div className="status-bar">
+              <span style={{ color: 'var(--text-muted)' }}>Scan:</span>
+              {scanMeta.duration && <span>Duration: {scanMeta.duration}</span>}
+              {scanMeta.languages && <span>Languages: {Array.isArray(scanMeta.languages) ? scanMeta.languages.join(', ') : scanMeta.languages}</span>}
+              {scanMeta.files_scanned && <span>Files: {scanMeta.files_scanned}</span>}
+            </div>
+          )}
+
+          {/* Filters and Table */}
+          <div className="card">
+            <div className="action-bar">
+              <div className="card-title" style={{ marginBottom: 0 }}>Vulnerability Findings</div>
+              <button className="btn btn-secondary btn-sm" onClick={onExport}>Export JSON</button>
+            </div>
+
+            <div className="filters-bar">
+              <input
+                className="search-input"
+                type="text"
+                placeholder="Search by title, file path, CWE, description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <select className="filter-select" value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)}>
+                <option value="all">All Severities</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+                <option value="info">Info</option>
+              </select>
+              {languages.length > 0 && (
+                <select className="filter-select" value={languageFilter} onChange={(e) => setLanguageFilter(e.target.value)}>
+                  <option value="all">All Languages</option>
+                  {languages.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+              )}
+              {categories.length > 0 && (
+                <select className="filter-select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                  <option value="all">All Categories</option>
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              )}
+            </div>
+
+            <div className="results-count">
+              Showing {filtered.length} of {total} findings
+              {severityFilter !== 'all' && <span> (filtered by {severityFilter})</span>}
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">{'\uD83D\uDD0D'}</div>
+                <h3>No findings match your criteria</h3>
+                <p>Try adjusting the filters or search terms</p>
+              </div>
+            ) : (
+              <div className="table-scroll">
+                <table className="vuln-table">
+                  <thead>
+                    <tr>
+                      <th onClick={() => handleSort('severity')}>Severity<span className="sort-arrow">{sortArrow('severity')}</span></th>
+                      <th onClick={() => handleSort('title')}>Title<span className="sort-arrow">{sortArrow('title')}</span></th>
+                      <th onClick={() => handleSort('file')}>File Path<span className="sort-arrow">{sortArrow('file')}</span></th>
+                      <th onClick={() => handleSort('line')}>Line<span className="sort-arrow">{sortArrow('line')}</span></th>
+                      <th onClick={() => handleSort('cwe')}>CWE<span className="sort-arrow">{sortArrow('cwe')}</span></th>
+                      <th onClick={() => handleSort('category')}>Category<span className="sort-arrow">{sortArrow('category')}</span></th>
+                      <th onClick={() => handleSort('confidence')}>Confidence<span className="sort-arrow">{sortArrow('confidence')}</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((vuln, idx) => {
+                      const id = vuln.id || idx;
+                      const isExpanded = expandedId === id;
+                      const sevClass = getSeverityClass(vuln.severity);
+                      const filePath = vuln.file_path || vuln.filePath || vuln.file || '-';
+                      const lineNum = vuln.line_number || vuln.lineNumber || vuln.line || '-';
+                      const title = vuln.title || vuln.name || vuln.rule_id || 'Untitled';
+                      const cwe = vuln.cwe || '-';
+                      const category = vuln.category || vuln.type || '-';
+                      const confidence = vuln.confidence || '-';
+
+                      return (
+                        <React.Fragment key={id}>
+                          <tr
+                            className={`clickable ${isExpanded ? 'expanded-row' : ''}`}
+                            onClick={() => setExpandedId(isExpanded ? null : id)}
+                          >
+                            <td><span className={`severity-badge ${sevClass}`}>{vuln.severity || 'Unknown'}</span></td>
+                            <td style={{ fontWeight: 500, maxWidth: '300px' }}>{title}</td>
+                            <td><span className="file-path truncate" title={filePath}>{filePath}</span></td>
+                            <td style={{ fontFamily: 'monospace', textAlign: 'center' }}>{lineNum}</td>
+                            <td>
+                              {cwe !== '-' ? (
+                                <a className="cwe-link" href={`https://cwe.mitre.org/data/definitions/${cwe.replace(/[^0-9]/g,'')}.html`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                                  {cwe}
+                                </a>
+                              ) : '-'}
+                            </td>
+                            <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{category}</td>
+                            <td><span className="confidence-badge">{confidence}</span></td>
+                          </tr>
+                          {isExpanded && (
+                            <tr>
+                              <td colSpan="7" style={{ padding: 0, border: 'none' }}>
+                                <VulnDetail vuln={vuln} />
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ===== Main App =====
+    function App() {
+      const [activeTab, setActiveTab] = useState('upload');
+      const [scanners, setScanners] = useState([]);
+      const [scannersLoading, setScannersLoading] = useState(false);
+      const [scannersError, setScannersError] = useState(null);
+      const [scanning, setScanning] = useState(false);
+      const [scanProgress, setScanProgress] = useState(0);
+      const [scanStatus, setScanStatus] = useState('');
+      const [results, setResults] = useState(null);
+      const [apiConnected, setApiConnected] = useState(false);
+      const { toasts, addToast, removeToast } = useToast();
+      const pollRef = useRef(null);
+
+      // Check API connectivity
+      useEffect(() => {
+        fetch(API_BASE + '/scanners', { method: 'GET', mode: 'cors' })
+          .then(r => { if (r.ok) setApiConnected(true); else setApiConnected(false); })
+          .catch(() => setApiConnected(false));
+      }, []);
+
+      // Load scanners
+      const loadScanners = useCallback(() => {
+        setScannersLoading(true);
+        setScannersError(null);
+        fetch(API_BASE + '/scanners')
+          .then(r => {
+            if (!r.ok) throw new Error('Failed to fetch scanners: ' + r.status);
+            return r.json();
+          })
+          .then(data => {
+            const list = Array.isArray(data) ? data : (data.scanners || []);
+            setScanners(list);
+            setApiConnected(true);
+            setScannersLoading(false);
+          })
+          .catch(err => {
+            setScannersError(err.message);
+            setScannersLoading(false);
+            setApiConnected(false);
+          });
+      }, []);
+
+      useEffect(() => { loadScanners(); }, [loadScanners]);
+
+      // Handle scan
+      const handleScan = useCallback((file) => {
+        setScanning(true);
+        setScanProgress(0);
+        setScanStatus('Uploading file...');
+        setActiveTab('progress');
+        setResults(null);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Simulate progress during upload
+        let fakeProgress = 0;
+        const progressInterval = setInterval(() => {
+          fakeProgress = Math.min(fakeProgress + Math.random() * 5, 85);
+          setScanProgress(Math.round(fakeProgress));
+          if (fakeProgress > 10 && fakeProgress < 30) setScanStatus('Uploading source code...');
+          else if (fakeProgress >= 30 && fakeProgress < 50) setScanStatus('Analyzing code structure...');
+          else if (fakeProgress >= 50 && fakeProgress < 70) setScanStatus('Running security scanners...');
+          else if (fakeProgress >= 70) setScanStatus('Generating report...');
+        }, 800);
+
+        fetch(API_BASE + '/scan', {
+          method: 'POST',
+          body: formData,
+        })
+          .then(r => {
+            if (!r.ok) throw new Error('Scan failed: HTTP ' + r.status);
+            return r.json();
+          })
+          .then(data => {
+            clearInterval(progressInterval);
+            setScanProgress(100);
+            setScanStatus('Scan complete!');
+
+            // Check if result contains scan_id for polling
+            if (data.scan_id && !data.vulnerabilities && !data.findings && !data.results) {
+              // Need to poll for results
+              pollForResults(data.scan_id);
+            } else {
+              setTimeout(() => {
+                setResults(data);
+                setScanning(false);
+                setActiveTab('results');
+                addToast('Scan completed successfully!', 'success');
+              }, 500);
+            }
+          })
+          .catch(err => {
+            clearInterval(progressInterval);
+            setScanning(false);
+            setActiveTab('upload');
+            addToast('Scan failed: ' + err.message, 'error');
+          });
+      }, [addToast]);
+
+      const pollForResults = useCallback((scanId) => {
+        setScanStatus('Waiting for scan results...');
+        let attempts = 0;
+        const maxAttempts = 120; // 10 minutes max
+
+        pollRef.current = setInterval(() => {
+          attempts++;
+          if (attempts > maxAttempts) {
+            clearInterval(pollRef.current);
+            setScanning(false);
+            setActiveTab('upload');
+            addToast('Scan timed out. Please try again.', 'error');
+            return;
+          }
+
+          fetch(API_BASE + '/scan/' + scanId + '/status')
+            .then(r => r.json())
+            .then(data => {
+              if (data.progress) setScanProgress(data.progress);
+              if (data.status_text) setScanStatus(data.status_text);
+
+              if (data.status === 'completed' || data.status === 'done') {
+                clearInterval(pollRef.current);
+                // Fetch final results
+                fetch(API_BASE + '/scan/' + scanId + '/results')
+                  .then(r => r.json())
+                  .then(resultData => {
+                    setResults(resultData);
+                    setScanning(false);
+                    setActiveTab('results');
+                    addToast('Scan completed successfully!', 'success');
+                  });
+              } else if (data.status === 'failed' || data.status === 'error') {
+                clearInterval(pollRef.current);
+                setScanning(false);
+                setActiveTab('upload');
+                addToast('Scan failed: ' + (data.error || 'Unknown error'), 'error');
+              }
+            })
+            .catch(() => { /* silently retry */ });
+        }, 5000);
+      }, [addToast]);
+
+      // Cleanup polling on unmount
+      useEffect(() => {
+        return () => { if (pollRef.current) clearInterval(pollRef.current); };
+      }, []);
+
+      // Export results
+      const handleExport = useCallback(() => {
+        if (!results) return;
+        const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sast-scan-results-${new Date().toISOString().slice(0,19).replace(/[T:]/g, '-')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        addToast('Results exported as JSON', 'success');
+      }, [results, addToast]);
+
+      // Load demo data for display
+      const loadDemoData = useCallback(() => {
+        const demo = {
+          scan_info: {
+            duration: '2m 34s',
+            files_scanned: 142,
+            languages: ['JavaScript', 'Python', 'Java'],
+          },
+          vulnerabilities: [
+            { id: 1, severity: 'Critical', title: 'SQL Injection in Login Query', file_path: 'src/auth/login.py', line_number: 45, cwe: 'CWE-89', category: 'Injection', confidence: 'High', language: 'Python', code_snippet: 'def login(username, password):\n    # WARNING: SQL Injection vulnerability\n    query = f"SELECT * FROM users WHERE username=\'{username}\' AND password=\'{password}\'"\n    cursor.execute(query)\n    return cursor.fetchone()', remediation: 'Use parameterized queries instead of string formatting. Replace the raw query with: cursor.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))', data_flow: ['User input received at /login endpoint', 'Parameter "username" passed to login() function', 'Unsanitized input concatenated into SQL query string', 'Query executed against database'], owasp: ['A03:2021 - Injection'] },
+            { id: 2, severity: 'Critical', title: 'Remote Code Execution via Deserialization', file_path: 'src/api/handlers.java', line_number: 112, cwe: 'CWE-502', category: 'Deserialization', confidence: 'High', language: 'Java', code_snippet: 'public Object deserialize(byte[] data) {\n    ObjectInputStream ois = new ObjectInputStream(\n        new ByteArrayInputStream(data));\n    return ois.readObject(); // Unsafe deserialization\n}', remediation: 'Use a safe deserialization library or whitelist allowed classes. Consider using JSON serialization instead of Java native serialization.', owasp: ['A08:2021 - Software and Data Integrity Failures'] },
+            { id: 3, severity: 'High', title: 'Cross-Site Scripting (Stored XSS)', file_path: 'src/views/comments.js', line_number: 78, cwe: 'CWE-79', category: 'XSS', confidence: 'High', language: 'JavaScript', code_snippet: 'function renderComment(comment) {\n    const container = document.getElementById("comments");\n    container.innerHTML += `<div class="comment">\n        <p>${comment.body}</p>\n    </div>`;\n}', remediation: 'Use textContent instead of innerHTML, or sanitize user input before rendering. Use a library like DOMPurify for HTML sanitization.', owasp: ['A03:2021 - Injection'] },
+            { id: 4, severity: 'High', title: 'Hardcoded API Key Exposed', file_path: 'src/config/settings.py', line_number: 12, cwe: 'CWE-798', category: 'Credentials', confidence: 'High', language: 'Python', code_snippet: 'AWS_ACCESS_KEY = "AKIA...REDACTED"\nAWS_SECRET_KEY = "wJalr...REDACTED"\nDB_PASSWORD = "super_secret_password_123"', remediation: 'Move all secrets to environment variables or a secure vault (e.g., AWS Secrets Manager, HashiCorp Vault). Never commit credentials to source control.', owasp: ['A07:2021 - Identification and Authentication Failures'] },
+            { id: 5, severity: 'High', title: 'Path Traversal in File Download', file_path: 'src/api/files.py', line_number: 34, cwe: 'CWE-22', category: 'Path Traversal', confidence: 'Medium', language: 'Python', code_snippet: '@app.route("/download")\ndef download():\n    filename = request.args.get("file")\n    return send_file(os.path.join(UPLOAD_DIR, filename))', remediation: 'Validate and sanitize the filename. Use os.path.basename() to strip directory components. Verify the resolved path is within the expected directory.', data_flow: ['HTTP GET parameter "file" received', 'Parameter used in os.path.join without sanitization', 'Resulting path passed to send_file()'], owasp: ['A01:2021 - Broken Access Control'] },
+            { id: 6, severity: 'Medium', title: 'Insecure Cookie Configuration', file_path: 'src/middleware/session.js', line_number: 23, cwe: 'CWE-614', category: 'Session', confidence: 'High', language: 'JavaScript', code_snippet: 'app.use(session({\n    secret: "keyboard cat",\n    cookie: {\n        secure: false,\n        httpOnly: false\n    }\n}));', remediation: 'Set secure: true and httpOnly: true on session cookies. Use a strong, randomly generated secret.', owasp: ['A07:2021 - Identification and Authentication Failures'] },
+            { id: 7, severity: 'Medium', title: 'Missing CSRF Protection', file_path: 'src/middleware/app.py', line_number: 5, cwe: 'CWE-352', category: 'CSRF', confidence: 'Medium', language: 'Python', code_snippet: 'app = Flask(__name__)\n# CSRF protection not enabled\n# CSRFProtect(app) is commented out', remediation: 'Enable CSRF protection by uncommenting CSRFProtect(app) and ensure all forms include CSRF tokens.', owasp: ['A01:2021 - Broken Access Control'] },
+            { id: 8, severity: 'Medium', title: 'Weak Password Hashing (MD5)', file_path: 'src/auth/utils.java', line_number: 67, cwe: 'CWE-328', category: 'Cryptography', confidence: 'High', language: 'Java', code_snippet: 'public String hashPassword(String password) {\n    MessageDigest md = MessageDigest.getInstance("MD5");\n    byte[] hash = md.digest(password.getBytes());\n    return Base64.encode(hash);\n}', remediation: 'Replace MD5 with a strong password hashing algorithm like bcrypt, scrypt, or Argon2.', owasp: ['A02:2021 - Cryptographic Failures'] },
+            { id: 9, severity: 'Low', title: 'Verbose Error Messages in Production', file_path: 'src/config/app.js', line_number: 15, cwe: 'CWE-209', category: 'Information Disclosure', confidence: 'Medium', language: 'JavaScript', code_snippet: 'app.use((err, req, res, next) => {\n    res.status(500).json({\n        error: err.message,\n        stack: err.stack,\n        query: req.query\n    });\n});', remediation: 'In production, return generic error messages. Log detailed errors server-side only.', owasp: ['A04:2021 - Insecure Design'] },
+            { id: 10, severity: 'Low', title: 'Missing Rate Limiting on Auth Endpoint', file_path: 'src/routes/auth.py', line_number: 1, cwe: 'CWE-307', category: 'Brute Force', confidence: 'Medium', language: 'Python', code_snippet: '@app.route("/api/login", methods=["POST"])\ndef login():\n    # No rate limiting applied\n    username = request.json.get("username")\n    password = request.json.get("password")', remediation: 'Implement rate limiting on authentication endpoints. Use flask-limiter or similar middleware to restrict requests per IP/user.', owasp: ['A07:2021 - Identification and Authentication Failures'] },
+            { id: 11, severity: 'Low', title: 'Unused Dependency with Known CVE', file_path: 'package.json', line_number: 22, cwe: 'CWE-1104', category: 'Dependency', confidence: 'Low', language: 'JavaScript', remediation: 'Remove the unused dependency or update to a patched version.' },
+            { id: 12, severity: 'Medium', title: 'Open Redirect Vulnerability', file_path: 'src/auth/callback.py', line_number: 30, cwe: 'CWE-601', category: 'Redirect', confidence: 'Medium', language: 'Python', code_snippet: '@app.route("/callback")\ndef callback():\n    next_url = request.args.get("next", "/")\n    return redirect(next_url)', remediation: 'Validate the redirect URL against a whitelist of allowed domains. Use url_for() for internal redirects.', owasp: ['A01:2021 - Broken Access Control'] },
+          ]
+        };
+        setResults(demo);
+        setActiveTab('results');
+        addToast('Demo data loaded for preview', 'info');
+      }, [addToast]);
+
+      return (
+        <div className="app-container">
+          <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+          {/* Header */}
+          <div className="header">
+            <div className="header-left">
+              <div className="logo-icon">S</div>
+              <div>
+                <h1>SAST <span>Offline Scanner</span></h1>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span className="header-version">v1.0.0</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                <div className={`status-dot ${apiConnected ? 'connected' : 'disconnected'}`}></div>
+                <span style={{ color: apiConnected ? 'var(--success)' : 'var(--critical)' }}>
+                  {apiConnected ? 'API Connected' : 'API Offline'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="nav-tabs">
+            <button className={`nav-tab ${activeTab === 'upload' ? 'active' : ''}`} onClick={() => setActiveTab('upload')}>
+              Upload &amp; Scan
+            </button>
+            <button className={`nav-tab ${activeTab === 'scanners' ? 'active' : ''}`} onClick={() => setActiveTab('scanners')}>
+              Scanners ({scanners.length})
+            </button>
+            {scanning && (
+              <button className={`nav-tab ${activeTab === 'progress' ? 'active' : ''}`} onClick={() => setActiveTab('progress')}>
+                Progress
+              </button>
+            )}
+            {results && (
+              <button className={`nav-tab ${activeTab === 'results' ? 'active' : ''}`} onClick={() => setActiveTab('results')}>
+                Results
+              </button>
+            )}
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'upload' && (
+            <div>
+              <UploadPanel onScanStart={handleScan} scanning={scanning} />
+              <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                <button className="btn btn-secondary btn-sm" onClick={loadDemoData}>
+                  Load Demo Data (Preview)
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'scanners' && (
+            <ScannerDashboard
+              scanners={scanners}
+              loading={scannersLoading}
+              error={scannersError}
+              onRefresh={loadScanners}
+            />
+          )}
+
+          {activeTab === 'progress' && scanning && (
+            <ScanProgress progress={scanProgress} statusText={scanStatus} />
+          )}
+
+          {activeTab === 'results' && results && (
+            <ResultsDashboard results={results} onExport={handleExport} />
+          )}
+
+          {/* Footer */}
+          <div style={{
+            textAlign: 'center', padding: '20px', marginTop: '20px',
+            color: 'var(--text-muted)', fontSize: '12px',
+            borderTop: '1px solid var(--border)'
+          }}>
+            SAST Offline Scanner &mdash; Static Application Security Testing Platform
+          </div>
+        </div>
+      );
+    }
+
+    // ===== Render =====
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

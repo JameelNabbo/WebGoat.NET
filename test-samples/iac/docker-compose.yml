@@ -1,0 +1,37 @@
+# Vulnerable docker-compose.yml
+version: '3.8'
+
+services:
+  web:
+    image: nginx
+    privileged: true
+    network_mode: host
+    ports:
+      - "22:22"
+      - "3306:3306"
+      - "0.0.0.0:27017:27017"
+    environment:
+      DB_PASSWORD: "MyP@ssw0rd!"
+      API_KEY: "sk-1234567890abcdef1234567890"
+      SECRET_KEY: "super-secret-key-12345"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc:/host-etc
+      - /root:/host-root
+    cap_add:
+      - SYS_ADMIN
+      - NET_ADMIN
+
+  database:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: "rootpass123"
+      MYSQL_PASSWORD: "userpass456"
+    ports:
+      - "3306:3306"
+    pid: host
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
