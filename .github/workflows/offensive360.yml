@@ -1,0 +1,43 @@
+name: Offensive 360 SAST Scan
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master]
+
+jobs:
+  sast-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create archive
+        run: |
+          zip -r source.zip . \
+            --exclude "*.git*" \
+            --exclude "node_modules/*" \
+            --exclude ".env*"
+
+      - name: Submit to Offensive 360
+        env:
+          O360_API_KEY: ${{ secrets.O360_API_KEY }}
+        run: |
+          HTTP_CODE=$(curl -sk -o /tmp/o360_resp.json -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $O360_API_KEY" \
+            -F "FileSource=@source.zip" \
+            -F "Name=WebGoat.NET" \
+            -F "ExternalScanSourceType=5" \
+            -F "DontWaitForScanToComplete=true" \
+            -F "AllowDependencyScan=true" \
+            -F "AllowLicenseScan=true" \
+            -F "AllowMalwareScan=true" \
+            -F "PipelineUrl=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "https://o360.madfoat.com/app/api/ExternalScan")
+          cat /tmp/o360_resp.json
+          [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ] || exit 1
+
+      - name: View results
+        if: always()
+        run: |
+          echo "Results: https://o360.madfoat.com/Projects"
