@@ -1,6 +1,4 @@
 name: Offensive 360 SAST Scan
-
-
 on:
   push:
     branches: [master, develop]
