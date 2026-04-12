@@ -6,6 +6,7 @@ on:
     branches: [master]
 
 
+
 jobs:
   sast-scan:
     runs-on: ubuntu-latest
