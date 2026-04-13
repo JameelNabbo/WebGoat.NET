@@ -1,32 +1,62 @@
 name: Offensive 360 SAST Scan
+
 on:
   push:
     branches: [master, develop]
   pull_request:
     branches: [master]
 
+permissions:
+  contents: read
 
 jobs:
   sast-scan:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, DC]
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Validate runner tools
+        run: |
+          set -e
+          command -v git >/dev/null 2>&1 || { echo "git is required"; exit 1; }
+          command -v tar >/dev/null 2>&1 || { echo "tar is required"; exit 1; }
+          command -v curl >/dev/null 2>&1 || { echo "curl is required"; exit 1; }
+
+      - name: Fetch repository without actions/checkout
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          SRC_DIR="$RUNNER_TEMP/o360-src"
+          rm -rf "$SRC_DIR"
+          mkdir -p "$SRC_DIR"
+          cd "$SRC_DIR"
+
+          git init
+          git remote add origin "${{ github.server_url }}/${{ github.repository }}.git"
+
+          git -c http.extraheader="AUTHORIZATION: bearer $GITHUB_TOKEN" \
+            fetch --depth=1 origin "${{ github.sha }}"
+
+          git checkout --detach FETCH_HEAD
 
       - name: Create archive
         run: |
-          zip -r source.zip . \
-            --exclude "*.git*" \
-            --exclude "node_modules/*" \
-            --exclude ".env*"
+          set -euo pipefail
+          cd "$RUNNER_TEMP/o360-src"
+          git archive --format=tar --output="$RUNNER_TEMP/source.tar" HEAD
+          ls -lh "$RUNNER_TEMP/source.tar"
 
       - name: Submit to Offensive 360
         env:
           O360_API_KEY: ${{ secrets.O360_API_KEY }}
         run: |
+          set -euo pipefail
+
           HTTP_CODE=$(curl -sk -o /tmp/o360_resp.json -w "%{http_code}" -X POST \
             -H "Authorization: Bearer $O360_API_KEY" \
-            -F "FileSource=@source.zip" \
-            -F "Name=WebGoat.NET" \
+            -F "FileSource=@$RUNNER_TEMP/source.tar" \
+            -F "Name=${{ github.event.repository.name }}" \
             -F "ExternalScanSourceType=5" \
             -F "DontWaitForScanToComplete=true" \
             -F "AllowDependencyScan=true" \
@@ -34,8 +64,9 @@ jobs:
             -F "AllowMalwareScan=true" \
             -F "PipelineUrl=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             "https://o360.madfoat.com/app/api/ExternalScan")
+
           cat /tmp/o360_resp.json
-          [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ] || exit 1
+          test "$HTTP_CODE" = "200" || test "$HTTP_CODE" = "201"
 
       - name: View results
         if: always()
